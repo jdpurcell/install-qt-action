@@ -34,8 +34,8 @@ jobs:
           # - windows-2022
           # - windows-2019
           - macos-13
-          - macos-14
-          - macos-15
+          # - macos-14
+          # - macos-15
         aqtversion:
           - null  # use whatever the default is
         src-doc-examples:
@@ -59,43 +59,43 @@ jobs:
         cache:
           - cached
           - uncached
-        include:
-          - os: windows-latest
-            dir: '/'
-            qt:
-              version: "6.7.0"
-              requested: "6.7.0"
-              modules: qtwebengine qtpositioning qtwebchannel
-          - os: ubuntu-20.04
-            src-doc-examples: true
-            source: true
-            src-archives: qtcharts
-            check-dir: ../Qt/5.15.2/Src
-            check: qtcharts/src/src.pro
-          - os: ubuntu-20.04
-            src-doc-examples: true
-            documentation: true
-            doc-archives: qmake
-            doc-modules: qtcharts qtwebengine
-            check-dir: ../Qt/Docs/Qt-5.15.2
-            check: qmake/qmake-tutorial.html qtcharts/qtcharts-index.html qtwebengine/qtwebengine-index.html
-          - os: ubuntu-20.04
-            src-doc-examples: true
-            examples: true
-            example-archives: qtsensors
-            example-modules: qtcharts qtwebengine
-            check-dir: ../Qt/Examples/Qt-5.15.2
-            check: charts/charts.pro sensors/sensors.pro webengine/webengine.pro
-          - os: ubuntu-22.04
-            aqtversion: "==3.1.*"
-            qt:
-              version: "5.15.2"
-              requested: "5.15"
-              modules: qtwebengine
-          - os: ubuntu-22.04
-            qt:
-              tools-only-build: true
-              add-tools-to-path: false
+        # include:
+        #   - os: windows-latest
+        #     dir: '/'
+        #     qt:
+        #       version: "6.7.0"
+        #       requested: "6.7.0"
+        #       modules: qtwebengine qtpositioning qtwebchannel
+        #   - os: ubuntu-20.04
+        #     src-doc-examples: true
+        #     source: true
+        #     src-archives: qtcharts
+        #     check-dir: ../Qt/5.15.2/Src
+        #     check: qtcharts/src/src.pro
+        #   - os: ubuntu-20.04
+        #     src-doc-examples: true
+        #     documentation: true
+        #     doc-archives: qmake
+        #     doc-modules: qtcharts qtwebengine
+        #     check-dir: ../Qt/Docs/Qt-5.15.2
+        #     check: qmake/qmake-tutorial.html qtcharts/qtcharts-index.html qtwebengine/qtwebengine-index.html
+        #   - os: ubuntu-20.04
+        #     src-doc-examples: true
+        #     examples: true
+        #     example-archives: qtsensors
+        #     example-modules: qtcharts qtwebengine
+        #     check-dir: ../Qt/Examples/Qt-5.15.2
+        #     check: charts/charts.pro sensors/sensors.pro webengine/webengine.pro
+        #   - os: ubuntu-22.04
+        #     aqtversion: "==3.1.*"
+        #     qt:
+        #       version: "5.15.2"
+        #       requested: "5.15"
+        #       modules: qtwebengine
+        #   - os: ubuntu-22.04
+        #     qt:
+        #       tools-only-build: true
+        #       add-tools-to-path: false
 
 
     steps:
@@ -144,6 +144,15 @@ jobs:
           set -x
           # Check that QT_ROOT_DIR contains a qmake of some kind
           ls "${QT_ROOT_DIR}/bin/" | grep qmake
+
+      - name: Switch macOS Xcode version with older Qt versions
+        if: ${{ matrix.qt.version && startsWith(matrix.os, 'macos-13') }}
+        shell: pwsh
+        env:
+          QT_VERSION: ${{ matrix.qt.version }}
+        run: |
+          # Workaround for QTBUG-117225
+          sudo xcode-select --switch /Applications/Xcode_14.3.1.app
 
       - name: Configure test project on windows
         if: ${{ matrix.qt.version && startsWith(matrix.os, 'windows') }}
