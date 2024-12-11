@@ -151,8 +151,10 @@ jobs:
         env:
           QT_VERSION: ${{ matrix.qt.version }}
         run: |
-          # Workaround for QTBUG-117225
-          sudo xcode-select --switch /Applications/Xcode_14.3.1.app
+          if ([version]$env:QT_VERSION -lt [version]"6.5.3") {
+            # Workaround for QTBUG-117225
+            sudo xcode-select --switch /Applications/Xcode_14.3.1.app
+          }
 
       - name: Configure test project on windows
         if: ${{ matrix.qt.version && startsWith(matrix.os, 'windows') }}
