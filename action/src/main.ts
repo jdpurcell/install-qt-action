@@ -99,7 +99,7 @@ const locateQtArchDir = (installDir: string): string => {
 const isAutodesktopSupported = async (): Promise<boolean> => {
   const rawOutput = await getPythonOutput("aqt", ["version"]);
   const match = rawOutput.match(/aqtinstall\(aqt\)\s+v(\d+\.\d+\.\d+)/);
-  return match ? compareVersions(match[1], ">=", "3.0.0") : false;
+  return match ? compareVersions(match[1], ">=", "3.0.0") : true;
 };
 
 class Inputs {
@@ -375,8 +375,10 @@ const run = async (): Promise<void> => {
     // Install aqtinstall separately: allows aqtinstall to override py7zr if required
     if (inputs.aqtSource.length > 0) {
       await execPython("pip install", [`"${inputs.aqtSource}"`]);
-    } else {
+    } else if (inputs.aqtVersion.length > 0) {
       await execPython("pip install", [`"aqtinstall${inputs.aqtVersion}"`]);
+    } else {
+      await execPython("pip install", ["git+https://github.com/jdpurcell/aqtinstall.git@custom"]);
     }
 
     // This flag will install a parallel desktop version of Qt, only where required.
