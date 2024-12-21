@@ -352,9 +352,6 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         else if (inputs.aqtVersion.length > 0) {
             yield execPython("pip install", [`"aqtinstall${inputs.aqtVersion}"`]);
         }
-        else {
-            yield execPython("pip install", ["git+https://github.com/jdpurcell/aqtinstall.git@custom"]);
-        }
         // This flag will install a parallel desktop version of Qt, only where required.
         // aqtinstall will automatically determine if this is necessary.
         const autodesktop = (yield isAutodesktopSupported()) ? ["--autodesktop"] : [];

@@ -380,8 +380,6 @@ const run = async (): Promise<void> => {
       await execPython("pip install", [`"${inputs.aqtSource}"`]);
     } else if (inputs.aqtVersion.length > 0) {
       await execPython("pip install", [`"aqtinstall${inputs.aqtVersion}"`]);
-    } else {
-      await execPython("pip install", ["git+https://github.com/jdpurcell/aqtinstall.git@custom"]);
     }
 
     // This flag will install a parallel desktop version of Qt, only where required.
