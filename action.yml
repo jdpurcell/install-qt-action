@@ -59,6 +59,9 @@ inputs:
   py7zrversion:
     description: Version of py7zr to use in case of issues
     default: ==0.20.*
+  use-naqt:
+    default: false
+    description: Whether or not to use naqt instead of aqtinstall.
   extra:
     description: Any extra arguments to append to the back
   source:
@@ -110,6 +113,7 @@ runs:
       aqtsource: ${{ inputs.aqtsource }}
       aqtversion: ${{ inputs.aqtversion }}
       py7zrversion: ${{ inputs.py7zrversion }}
+      use-naqt: ${{ inputs.use-naqt }}
       source: ${{ inputs.source }}
       src-archives: ${{ inputs.src-archives }}
       documentation: ${{ inputs.documentation }}

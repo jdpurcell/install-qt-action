@@ -67,6 +67,11 @@ const getPythonOutput = async (command: string, args: readonly string[]): Promis
   return out.stdout + out.stderr;
 };
 
+const execDotNet = async (projectDir: string, args: readonly string[]): Promise<number> => {
+  const baseArgs = ["run", "--"];
+  return exec("dotnet", [...baseArgs, ...args], { cwd: projectDir });
+};
+
 const flaggedList = (flag: string, listArgs: readonly string[]): string[] => {
   return listArgs.length ? [flag, ...listArgs] : [];
 };
@@ -139,6 +144,7 @@ class Inputs {
   readonly aqtSource: string;
   readonly aqtVersion: string;
   readonly py7zrVersion: string;
+  readonly useNaqt: boolean;
 
   constructor() {
     const host = core.getInput("host");
@@ -266,6 +272,8 @@ class Inputs {
     this.example = Inputs.getBoolInput("examples");
     this.exampleModules = Inputs.getStringArrayInput("example-modules");
     this.exampleArchives = Inputs.getStringArrayInput("example-archives");
+
+    this.useNaqt = Inputs.getBoolInput("use-naqt");
   }
 
   public get cacheKey(): string {
@@ -384,19 +392,43 @@ const run = async (): Promise<void> => {
 
   // Install Qt and tools if not cached
   if (!internalCacheHit) {
-    // Install dependencies via pip
-    await execPython("pip install", ["setuptools", "wheel", `"py7zr${inputs.py7zrVersion}"`]);
+    let naqtDir = "";
+    if (inputs.useNaqt && inputs.isInstallQtBinaries) {
+      const tempDir = os.tmpdir();
+      naqtDir = path.join(tempDir, "naqt");
+      await exec("git clone --recurse-submodules https://github.com/jdpurcell/naqt.git", [], {
+        cwd: tempDir,
+      });
+      const env = process.env;
+      env.DOTNET_NOLOGO = "true";
+      env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
+      env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
+      env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
+      env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
+    }
+    if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
+      // Install dependencies via pip
+      await execPython("pip install", ["setuptools", "wheel", `"py7zr${inputs.py7zrVersion}"`]);
 
-    // Install aqtinstall separately: allows aqtinstall to override py7zr if required
-    if (inputs.aqtSource.length > 0) {
-      await execPython("pip install", [`"${inputs.aqtSource}"`]);
-    } else {
-      await execPython("pip install", [`"aqtinstall${inputs.aqtVersion}"`]);
+      // Install aqtinstall separately: allows aqtinstall to override py7zr if required
+      if (inputs.aqtSource.length > 0) {
+        await execPython("pip install", [`"${inputs.aqtSource}"`]);
+      } else {
+        await execPython("pip install", [`"aqtinstall${inputs.aqtVersion}"`]);
+      }
     }
 
     // This flag will install a parallel desktop version of Qt, only where required.
     // aqtinstall will automatically determine if this is necessary.
-    const autodesktop = (await isAutodesktopSupported()) ? ["--autodesktop"] : [];
+    const autodesktop = inputs.useNaqt || (await isAutodesktopSupported()) ? ["--autodesktop"] : [];
+
+    const execInstallerCommand = async (args: readonly string[]): Promise<number> => {
+      if (inputs.useNaqt && args[0] === "install-qt") {
+        return execDotNet(naqtDir, args);
+      } else {
+        return execPython("aqt", args);
+      }
+    };
 
     // Install Qt
     if (inputs.isInstallQtBinaries) {
@@ -411,8 +443,7 @@ const run = async (): Promise<void> => {
         ...flaggedList("--archives", inputs.archives),
         ...inputs.extra,
       ];
-
-      await execPython("aqt install-qt", qtArgs);
+      await execInstallerCommand(["install-qt", ...qtArgs]);
     }
 
     const installSrcDocExamples = async (
@@ -429,7 +460,7 @@ const run = async (): Promise<void> => {
         ...flaggedList("--modules", modules),
         ...inputs.extra,
       ];
-      await execPython(`aqt install-${flavor}`, qtArgs);
+      await execInstallerCommand([`install-${flavor}`, ...qtArgs]);
     };
 
     // Install source, docs, & examples
@@ -448,7 +479,7 @@ const run = async (): Promise<void> => {
       const toolArgs = [inputs.host, inputs.target, tool];
       toolArgs.push("--outputdir", inputs.dir);
       toolArgs.push(...inputs.extra);
-      await execPython("aqt install-tool", toolArgs);
+      await execInstallerCommand(["install-tool", ...toolArgs]);
     }
   }
 
