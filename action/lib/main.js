@@ -348,7 +348,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     // Install Qt and tools if not cached
     if (!internalCacheHit) {
         let naqtDir = "";
-        if (inputs.useNaqt) {
+        if (inputs.useNaqt && inputs.isInstallQtBinaries) {
             const tempDir = os.tmpdir();
             naqtDir = path.join(tempDir, "naqt");
             yield (0, exec_1.exec)("git clone --recurse-submodules https://github.com/jdpurcell/naqt.git", [], {
@@ -361,7 +361,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
             env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
             env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
         }
-        else {
+        if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
             // Install dependencies via pip
             yield execPython("pip install", ["setuptools", "wheel", `"py7zr${inputs.py7zrVersion}"`]);
             // Install aqtinstall separately: allows aqtinstall to override py7zr if required
@@ -373,7 +373,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
             }
         }
         const execInstallerCommand = (args) => __awaiter(void 0, void 0, void 0, function* () {
-            if (inputs.useNaqt) {
+            if (inputs.useNaqt && args[0] === "install-qt") {
                 return execDotNet(naqtDir, args);
             }
             else {

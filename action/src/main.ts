@@ -381,7 +381,7 @@ const run = async (): Promise<void> => {
   // Install Qt and tools if not cached
   if (!internalCacheHit) {
     let naqtDir = "";
-    if (inputs.useNaqt) {
+    if (inputs.useNaqt && inputs.isInstallQtBinaries) {
       const tempDir = os.tmpdir();
       naqtDir = path.join(tempDir, "naqt");
       await exec("git clone --recurse-submodules https://github.com/jdpurcell/naqt.git", [], {
@@ -393,7 +393,8 @@ const run = async (): Promise<void> => {
       env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
       env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
       env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
-    } else {
+    }
+    if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
       // Install dependencies via pip
       await execPython("pip install", ["setuptools", "wheel", `"py7zr${inputs.py7zrVersion}"`]);
 
@@ -406,7 +407,7 @@ const run = async (): Promise<void> => {
     }
 
     const execInstallerCommand = async (args: readonly string[]): Promise<number> => {
-      if (inputs.useNaqt) {
+      if (inputs.useNaqt && args[0] === "install-qt") {
         return execDotNet(naqtDir, args);
       } else {
         return execPython("aqt", args);

@@ -51,6 +51,7 @@ jobs:
           examples: true
           example-archives: ${{ matrix.qt.example-archives }}
           example-modules:  ${{ matrix.qt.example-modules }}
+          use-naqt: true
 
       - name: Test QT_HOST_PATH
         if: ${{ startsWith(matrix.qt.version, '6.') }}

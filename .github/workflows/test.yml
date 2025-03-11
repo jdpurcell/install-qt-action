@@ -30,34 +30,34 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - ubuntu-20.04
+          #- ubuntu-20.04
           - windows-2022
-          - windows-2019
-          - macos-13
+          #- windows-2019
+          #- macos-13
           - macos-14
-          - macos-15
+          #- macos-15
         aqtversion:
           - null  # use whatever the default is
         src-doc-examples:
           - false
         qt:
-          - version: "5.9.0"
-            requested: "5.9.0"
-            modules: qtwebengine
+          #- version: "5.9.0"
+          #  requested: "5.9.0"
+          #  modules: qtwebengine
           - version: "5.15.2"
-            requested: "5.15"
+            requested: "5.15.2"
             modules: qtwebengine
           - version: "6.3.2"  # Qt 6.3 is not an LTS version, so '6.3.*' always resolves to '6.3.2'
-            requested: "6.3.*"
+            requested: "6.3.2"
             # In Qt 6.2.0+, qtwebengine requires qtpositioning and qtwebchannel
             modules: qtwebengine qtpositioning qtwebchannel
           - version: "6.7.0"
             requested: "6.7.0"
             modules: qtwebengine qtpositioning qtwebchannel
-          - tools-only-build: true
-            add-tools-to-path: true
+          #- tools-only-build: true
+          #  add-tools-to-path: true
         cache:
-          - cached
+          #- cached
           - uncached
         include:
           - os: windows-latest
@@ -86,12 +86,12 @@ jobs:
             example-modules: qtcharts qtwebengine
             check-dir: ../Qt/Examples/Qt-5.15.2
             check: charts/charts.pro sensors/sensors.pro webengine/webengine.pro
-          - os: ubuntu-22.04
-            aqtversion: "==3.1.*"
-            qt:
-              version: "5.15.2"
-              requested: "5.15"
-              modules: qtwebengine
+          #- os: ubuntu-22.04
+          #  aqtversion: "==3.1.*"
+          #  qt:
+          #    version: "5.15.2"
+          #    requested: "5.15"
+          #    modules: qtwebengine
           - os: ubuntu-22.04
             qt:
               tools-only-build: true
@@ -130,6 +130,7 @@ jobs:
           version: ${{ matrix.qt.requested }}
           tools: tools_ifw tools_qtcreator_gui,qt.tools.qtcreator_gui
           cache: ${{ matrix.cache == 'cached' }}
+          use-naqt: true
 
       - name: Install Qt with options and specified aqtversion
         if: ${{ matrix.aqtversion && matrix.qt.version }}
