@@ -6,7 +6,7 @@ import * as process from "process";
 
 import * as cache from "@actions/cache";
 import * as core from "@actions/core";
-import { exec, getExecOutput } from "@actions/exec";
+import { exec } from "@actions/exec";
 
 import * as glob from "glob";
 import { compare, CompareOperator } from "compare-versions";
@@ -60,13 +60,6 @@ const execPython = async (command: string, args: readonly string[]): Promise<num
   return exec(pythonCommand(command, args));
 };
 
-const getPythonOutput = async (command: string, args: readonly string[]): Promise<string> => {
-  // Aqtinstall prints to both stderr and stdout, depending on the command.
-  // This function assumes we don't care which is which, and we want to see it all.
-  const out = await getExecOutput(pythonCommand(command, args));
-  return out.stdout + out.stderr;
-};
-
 const execDotNet = async (projectDir: string, args: readonly string[]): Promise<number> => {
   const baseArgs = ["run", "--"];
   return exec("dotnet", [...baseArgs, ...args], { cwd: projectDir });
@@ -104,12 +97,6 @@ const locateQtArchDir = (installDir: string, host: string): [string, boolean] =>
     // NOTE: if multiple Qt installations exist, this may not select the desired directory
     return [qtArchDirs[0], false];
   }
-};
-
-const isAutodesktopSupported = async (): Promise<boolean> => {
-  const rawOutput = await getPythonOutput("aqt", ["version"]);
-  const match = rawOutput.match(/aqtinstall\(aqt\)\s+v(\d+\.\d+\.\d+)/);
-  return match ? compareVersions(match[1], ">=", "3.0.0") : false;
 };
 
 class Inputs {
@@ -419,10 +406,6 @@ const run = async (): Promise<void> => {
       }
     }
 
-    // This flag will install a parallel desktop version of Qt, only where required.
-    // aqtinstall will automatically determine if this is necessary.
-    const autodesktop = inputs.useNaqt || (await isAutodesktopSupported()) ? ["--autodesktop"] : [];
-
     const execInstallerCommand = async (args: readonly string[]): Promise<number> => {
       if (inputs.useNaqt && args[0] === "install-qt") {
         return execDotNet(naqtDir, args);
@@ -438,7 +421,7 @@ const run = async (): Promise<void> => {
         inputs.target,
         inputs.version,
         ...(inputs.arch ? [inputs.arch] : []),
-        ...autodesktop,
+        "--autodesktop",
         ...["--outputdir", inputs.dir],
         ...flaggedList("--modules", inputs.modules),
         ...flaggedList("--archives", inputs.archives),
