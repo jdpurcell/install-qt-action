@@ -93,7 +93,7 @@ runs:
       python-version: '3.9.x - 3.12.x'
 
   - name: Setup and run aqtinstall
-    uses: ./action
+    uses: jdpurcell/install-qt-action/action@v5
     with:
       dir: ${{ inputs.dir }}
       version: ${{ inputs.version }}
