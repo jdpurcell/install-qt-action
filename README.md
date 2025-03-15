@@ -12,6 +12,7 @@ Fork of [jurplel](https://github.com/jurplel)'s wonderful `install-qt-action`. G
 * Supports ARM64 hosts.
 * Sets the `QT_HOST_PATH` environment variable for `autodesktop` configurations.
 * Uses [aqtinstall](https://github.com/miurahr/aqtinstall) `3.2.*` by default which notably fixes WASM/Android support for Qt 6.7+ and also improves `autodesktop` by installing the same modules for both the host and target.
+* Fixes caching issue caused by [outdated](https://github.com/actions/toolkit/discussions/1890) `actions/cache` dependency.
 * Option to use alternate backend [naqt](https://github.com/jdpurcell/naqt) which runs via dotnet instead of Python.
 
 ## Options
