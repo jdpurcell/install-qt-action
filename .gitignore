@@ -44,6 +44,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Compiled TypeScript, pre-bundle
+/action/lib/
+
 # TypeScript v1 declaration files
 typings/
 

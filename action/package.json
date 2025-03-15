@@ -5,7 +5,7 @@
   "description": "Install qt action for github actions",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc -p ./",
+    "build": "tsc -p . && ncc build lib/main.js -o dist",
     "lint": "eslint src/main.ts",
     "fix": "eslint src/main.ts --fix"
   },
@@ -28,6 +28,7 @@
     "@types/semver": "^7.1.0",
     "@typescript-eslint/eslint-plugin": "^5.13.0",
     "@typescript-eslint/parser": "^5.13.0",
+    "@vercel/ncc": "^0.38.3",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.4.0",
     "eslint-plugin-prettier": "^4.0.0",
