@@ -65,6 +65,9 @@ inputs:
   use-naqt:
     default: false
     description: Whether or not to use naqt instead of aqtinstall.
+  naqt-via-git:
+    description: Clone naqt via Git and run from source instead of using precompiled version.
+    default: false
   extra:
     description: Any extra arguments to append to the back
   source:
@@ -94,8 +97,7 @@ runs:
     uses: actions/setup-python@v5
     with:
       python-version: '3.9.x - 3.12.x'
-
-  - name: Setup and run aqtinstall
+  - name: Install Qt
     uses: ./action
     with:
       dir: ${{ inputs.dir }}
@@ -118,6 +120,7 @@ runs:
       aqtversion: ${{ inputs.aqtversion }}
       py7zrversion: ${{ inputs.py7zrversion }}
       use-naqt: ${{ inputs.use-naqt }}
+      naqt-via-git: ${{ inputs.naqt-via-git }}
       source: ${{ inputs.source }}
       src-archives: ${{ inputs.src-archives }}
       documentation: ${{ inputs.documentation }}
