@@ -24,6 +24,9 @@ inputs:
     description: Additional Qt modules to install
   archives:
     description: Specify which Qt archive to install
+  autodesktop:
+    description: Include --autodesktop option in install-qt command
+    default: true
   cache:
     description: Whether or not to cache Qt automatically
     default: false
@@ -103,6 +106,7 @@ runs:
       install-deps: ${{ inputs.install-deps }}
       modules: ${{ inputs.modules }}
       archives: ${{ inputs.archives }}
+      autodesktop: ${{ inputs.autodesktop }}
       cache: ${{ inputs.cache }}
       cache-key-prefix: ${{ inputs.cache-key-prefix }}
       tools: ${{ inputs.tools }}
