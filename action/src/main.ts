@@ -107,6 +107,7 @@ class Inputs {
   readonly dir: string;
   readonly modules: string[];
   readonly archives: string[];
+  readonly autodesktop: boolean;
   readonly tools: string[];
   readonly addToolsToPath: boolean;
   readonly extra: string[];
@@ -218,6 +219,8 @@ class Inputs {
     this.modules = Inputs.getStringArrayInput("modules");
 
     this.archives = Inputs.getStringArrayInput("archives");
+
+    this.autodesktop = Inputs.getBoolInput("autodesktop");
 
     this.tools = Inputs.getStringArrayInput("tools").map(
       // The tools inputs have the tool name, variant, and arch delimited by a comma
@@ -380,10 +383,10 @@ const run = async (): Promise<void> => {
 
   // Install Qt and tools if not cached
   if (!internalCacheHit) {
-    let naqtDir = "";
-    if (inputs.useNaqt && inputs.isInstallQtBinaries) {
-      const tempDir = os.tmpdir();
-      naqtDir = path.join(tempDir, "naqt");
+    const tempDir = os.tmpdir();
+    const naqtDir = path.join(tempDir, "naqt");
+
+    if (inputs.useNaqt && inputs.isInstallQtBinaries && !dirExists(naqtDir)) {
       await exec("git clone --recurse-submodules https://github.com/jdpurcell/naqt.git", [], {
         cwd: tempDir,
       });
@@ -421,7 +424,7 @@ const run = async (): Promise<void> => {
         inputs.target,
         inputs.version,
         ...(inputs.arch ? [inputs.arch] : []),
-        "--autodesktop",
+        ...(inputs.autodesktop ? ["--autodesktop"] : []),
         ...["--outputdir", inputs.dir],
         ...flaggedList("--modules", inputs.modules),
         ...flaggedList("--archives", inputs.archives),
