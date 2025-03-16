@@ -94,8 +94,7 @@ const execPython = (command, args) => __awaiter(void 0, void 0, void 0, function
     return (0, exec_1.exec)(pythonCommand(command, args));
 });
 const execDotNet = (projectDir, args) => __awaiter(void 0, void 0, void 0, function* () {
-    const baseArgs = ["run", "--"];
-    return (0, exec_1.exec)("dotnet", [...baseArgs, ...args], { cwd: projectDir });
+    return (0, exec_1.exec)("dotnet", [...args], { cwd: projectDir });
 });
 const flaggedList = (flag, listArgs) => {
     return listArgs.length ? [flag, ...listArgs] : [];
@@ -243,6 +242,7 @@ class Inputs {
         this.exampleModules = Inputs.getStringArrayInput("example-modules");
         this.exampleArchives = Inputs.getStringArrayInput("example-archives");
         this.useNaqt = Inputs.getBoolInput("use-naqt");
+        this.naqtViaGit = Inputs.getBoolInput("naqt-via-git");
     }
     get cacheKey() {
         let cacheKey = this.cacheKeyPrefix;
@@ -356,17 +356,25 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     // Install Qt and tools if not cached
     if (!internalCacheHit) {
         const tempDir = os.tmpdir();
-        const naqtDir = path.join(tempDir, "naqt");
+        const naqtDir = path.join(tempDir, inputs.naqtViaGit ? "naqt-src" : "naqt-bin");
         if (inputs.useNaqt && inputs.isInstallQtBinaries && !dirExists(naqtDir)) {
-            yield (0, exec_1.exec)("git clone --recurse-submodules https://github.com/jdpurcell/naqt.git", [], {
-                cwd: tempDir,
-            });
-            const env = process.env;
-            env.DOTNET_NOLOGO = "true";
-            env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
-            env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
-            env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
-            env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
+            const execOpt = { cwd: tempDir };
+            if (inputs.naqtViaGit) {
+                const gitUrl = "https://github.com/jdpurcell/naqt.git";
+                yield (0, exec_1.exec)(`git clone --recurse-submodules ${gitUrl} naqt-src`, [], execOpt);
+                const env = process.env;
+                env.DOTNET_NOLOGO = "true";
+                env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
+                env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
+                env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
+                env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
+            }
+            else {
+                const zipUrl = "https://github.com/jdpurcell/naqt/releases/download/latest/naqt.zip";
+                yield (0, exec_1.exec)(`curl -sL ${zipUrl} -o naqt.zip`, [], execOpt);
+                yield (0, exec_1.exec)("unzip -q naqt.zip -d naqt-bin", [], execOpt);
+                yield fs.promises.unlink(path.join(tempDir, "naqt.zip"));
+            }
         }
         if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
             // Install dependencies via pip
@@ -381,7 +389,8 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         const execInstallerCommand = (args) => __awaiter(void 0, void 0, void 0, function* () {
             if (inputs.useNaqt && args[0] === "install-qt") {
-                return execDotNet(naqtDir, args);
+                const baseArgs = inputs.naqtViaGit ? ["run", "--"] : ["naqt.dll"];
+                return execDotNet(naqtDir, [...baseArgs, ...args]);
             }
             else {
                 return execPython("aqt", args);
