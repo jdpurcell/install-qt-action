@@ -212,6 +212,7 @@ class Inputs {
         this.dir = path.resolve(dir, "Qt");
         this.modules = Inputs.getStringArrayInput("modules");
         this.archives = Inputs.getStringArrayInput("archives");
+        this.autodesktop = Inputs.getBoolInput("autodesktop");
         this.tools = Inputs.getStringArrayInput("tools").map(
         // The tools inputs have the tool name, variant, and arch delimited by a comma
         // aqt expects spaces instead
@@ -354,10 +355,9 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     // Install Qt and tools if not cached
     if (!internalCacheHit) {
-        let naqtDir = "";
-        if (inputs.useNaqt && inputs.isInstallQtBinaries) {
-            const tempDir = os.tmpdir();
-            naqtDir = path.join(tempDir, "naqt");
+        const tempDir = os.tmpdir();
+        const naqtDir = path.join(tempDir, "naqt");
+        if (inputs.useNaqt && inputs.isInstallQtBinaries && !dirExists(naqtDir)) {
             yield (0, exec_1.exec)("git clone --recurse-submodules https://github.com/jdpurcell/naqt.git", [], {
                 cwd: tempDir,
             });
@@ -394,7 +394,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
                 inputs.target,
                 inputs.version,
                 ...(inputs.arch ? [inputs.arch] : []),
-                "--autodesktop",
+                ...(inputs.autodesktop ? ["--autodesktop"] : []),
                 ...["--outputdir", inputs.dir],
                 ...flaggedList("--modules", inputs.modules),
                 ...flaggedList("--archives", inputs.archives),
