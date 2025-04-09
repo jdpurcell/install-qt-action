@@ -378,7 +378,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
             // Install dependencies via pip
-            yield execPython("pip install", ["setuptools", "wheel", `"py7zr${inputs.py7zrVersion}"`]);
+            yield execPython("pip install", ["setuptools", "wheel==0.45.1", `"py7zr${inputs.py7zrVersion}"`]);
             // Install aqtinstall separately: allows aqtinstall to override py7zr if required
             if (inputs.aqtSource.length > 0) {
                 yield execPython("pip install", [`"${inputs.aqtSource}"`]);
