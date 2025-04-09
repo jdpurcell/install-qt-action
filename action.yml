@@ -98,7 +98,7 @@ runs:
     with:
       python-version: '3.9.x - 3.12.x'
   - name: Install Qt
-    uses: jdpurcell/install-qt-action/action@v5
+    uses: jdpurcell/install-qt-action/action@staging
     with:
       dir: ${{ inputs.dir }}
       version: ${{ inputs.version }}
