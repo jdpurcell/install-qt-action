@@ -408,11 +408,7 @@ const run = async (): Promise<void> => {
 
     if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
       // Install dependencies via pip
-      await execPython("pip install", [
-        "setuptools>=70.1.0",
-        "wheel",
-        `"py7zr${inputs.py7zrVersion}"`,
-      ]);
+      await execPython("pip install", ["setuptools>=70.1.0", `"py7zr${inputs.py7zrVersion}"`]);
 
       // Install aqtinstall separately: allows aqtinstall to override py7zr if required
       if (inputs.aqtSource.length > 0) {
