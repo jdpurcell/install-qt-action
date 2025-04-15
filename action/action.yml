@@ -22,6 +22,8 @@ inputs:
     default: true
   modules:
     description: Additional Qt modules to install
+  extensions:
+    description: Additional Qt extensions to install
   archives:
     description: Specify which Qt archive to install
   autodesktop:
@@ -61,10 +63,14 @@ inputs:
     default: ==0.22.*
   use-naqt:
     default: false
-    description: Whether or not to use naqt instead of aqtinstall.
+    description: Use naqt instead of aqtinstall.
   naqt-via-git:
     description: Clone naqt via Git and run from source instead of using precompiled version.
     default: false
+  mirror:
+    description: Custom mirror to use for downloading Qt (e.g. https://qt.mirror.constant.com). naqt only.
+  nohash:
+    description: Disable hash checking when downloading Qt. naqt only.
   extra:
     description: Any extra arguments to append to the back
   source:
