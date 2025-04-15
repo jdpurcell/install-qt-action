@@ -28,3 +28,20 @@ Default: `false`
 Set to `true` to enable the `--autodesktop` option when installing Qt. For cross-compilation installations (e.g. WASM, Android, iOS) this will automatically install the corresponding desktop version of Qt. If you don't want the desktop version, or plan to install it separately in a different step, you can disable this.
 
 Default: `true`
+
+### `extensions`
+Space delimited list of Qt extensions to install. With `aqtinstall` these will be appended to the list of requested modules since its command line arguments don't differentiate between modules and extensions. With `naqt` these will be passed in a separate argument. `naqt` also allows extensions to be specified as modules for compatibility with `aqtinstall`, but specifying them explicitly allows it to work with future extensions even if they aren't in `naqt`'s known extension list.
+
+Example values: `qtwebengine`, `qtpdf`
+
+### `mirror`
+Base address of the mirror to use for downloading Qt. Only works with `naqt`; `aqtinstall` requires a custom `.ini` file to change this behavior.
+
+Example: `https://qt.mirror.constant.com`
+
+Default: Use the official Qt mirror.
+
+### `nohash`
+Set to `true` to disable hash checking when downloading Qt. Use with caution, e.g. only for testing or as a last resort if Qt's official mirror (which hosts the hashes) is down. Only works with `naqt`; `aqtinstall` requires a custom `.ini` file to change this behavior.
+
+Default: `false`

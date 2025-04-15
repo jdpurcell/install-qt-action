@@ -105,10 +105,13 @@ class Inputs {
   readonly arch: string;
   readonly dir: string;
   readonly modules: string[];
+  readonly extensions: string[];
   readonly archives: string[];
   readonly autodesktop: boolean;
   readonly tools: string[];
   readonly addToolsToPath: boolean;
+  readonly mirror: string;
+  readonly nohash: boolean;
   readonly extra: string[];
 
   readonly src: boolean;
@@ -218,6 +221,8 @@ class Inputs {
 
     this.modules = Inputs.getStringArrayInput("modules");
 
+    this.extensions = Inputs.getStringArrayInput("extensions");
+
     this.archives = Inputs.getStringArrayInput("archives");
 
     this.autodesktop = Inputs.getBoolInput("autodesktop");
@@ -229,6 +234,10 @@ class Inputs {
     );
 
     this.addToolsToPath = Inputs.getBoolInput("add-tools-to-path");
+
+    this.mirror = core.getInput("mirror");
+
+    this.nohash = Inputs.getBoolInput("nohash");
 
     this.extra = Inputs.getStringArrayInput("extra");
 
@@ -283,6 +292,7 @@ class Inputs {
         this.aqtVersion,
       ],
       this.modules,
+      this.extensions,
       this.archives,
       this.extra,
       this.tools,
@@ -436,8 +446,14 @@ const run = async (): Promise<void> => {
         ...(inputs.arch ? [inputs.arch] : []),
         ...(inputs.autodesktop ? ["--autodesktop"] : []),
         ...["--outputdir", inputs.dir],
-        ...flaggedList("--modules", inputs.modules),
+        ...flaggedList("--modules", [
+          ...inputs.modules,
+          ...(inputs.useNaqt ? [] : inputs.extensions),
+        ]),
+        ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
         ...flaggedList("--archives", inputs.archives),
+        ...(inputs.mirror ? ["--mirror", inputs.mirror] : []),
+        ...(inputs.nohash ? ["--nohash"] : []),
         ...inputs.extra,
       ];
       await execInstallerCommand(["install-qt", ...qtArgs]);
