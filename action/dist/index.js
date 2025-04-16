@@ -210,6 +210,7 @@ class Inputs {
         }
         this.dir = path.resolve(dir, "Qt");
         this.modules = Inputs.getStringArrayInput("modules");
+        this.extensions = Inputs.getStringArrayInput("extensions");
         this.archives = Inputs.getStringArrayInput("archives");
         this.autodesktop = Inputs.getBoolInput("autodesktop");
         this.tools = Inputs.getStringArrayInput("tools").map(
@@ -217,6 +218,8 @@ class Inputs {
         // aqt expects spaces instead
         (tool) => tool.replace(/,/g, " "));
         this.addToolsToPath = Inputs.getBoolInput("add-tools-to-path");
+        this.mirror = core.getInput("mirror");
+        this.nohash = Inputs.getBoolInput("nohash");
         this.extra = Inputs.getStringArrayInput("extra");
         const installDeps = core.getInput("install-deps").toLowerCase();
         if (installDeps === "nosudo") {
@@ -259,6 +262,7 @@ class Inputs {
                 this.aqtVersion,
             ],
             this.modules,
+            this.extensions,
             this.archives,
             this.extra,
             this.tools,
@@ -405,8 +409,14 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
                 ...(inputs.arch ? [inputs.arch] : []),
                 ...(inputs.autodesktop ? ["--autodesktop"] : []),
                 ...["--outputdir", inputs.dir],
-                ...flaggedList("--modules", inputs.modules),
+                ...flaggedList("--modules", [
+                    ...inputs.modules,
+                    ...(inputs.useNaqt ? [] : inputs.extensions),
+                ]),
+                ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
                 ...flaggedList("--archives", inputs.archives),
+                ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
+                ...(inputs.nohash ? ["--nohash"] : []),
                 ...inputs.extra,
             ];
             yield execInstallerCommand(["install-qt", ...qtArgs]);
