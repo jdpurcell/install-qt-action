@@ -452,7 +452,7 @@ const run = async (): Promise<void> => {
         ]),
         ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
         ...flaggedList("--archives", inputs.archives),
-        ...(inputs.mirror ? ["--mirror", inputs.mirror] : []),
+        ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
         ...(inputs.nohash ? ["--nohash"] : []),
         ...inputs.extra,
       ];

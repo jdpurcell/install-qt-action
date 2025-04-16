@@ -35,7 +35,7 @@ Space delimited list of Qt extensions to install. With `aqtinstall` these will b
 Example values: `qtwebengine`, `qtpdf`
 
 ### `mirror`
-Base address of the mirror to use for downloading Qt. Only works with `naqt`; `aqtinstall` requires a custom `.ini` file to change this behavior.
+Base address of the mirror to use for downloading Qt.
 
 Example: `https://qt.mirror.constant.com`
 
