@@ -57,10 +57,10 @@ inputs:
     description: Location to source aqtinstall from in case of issues
   aqtversion:
     description: Version of aqtinstall to use in case of issues
-    default: ==3.2.*
+    default: ==3.3.*
   py7zrversion:
     description: Version of py7zr to use in case of issues
-    default: ==0.22.*
+    default: ==1.0.*
   use-naqt:
     default: false
     description: Use naqt instead of aqtinstall.
