@@ -476,7 +476,7 @@ const run = async (): Promise<void> => {
           ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
           ...flaggedList("--archives", inputs.archives),
           ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
-          ...(inputs.nohash ? ["--nohash"] : []),
+          ...(inputs.nohash ? [inputs.useNaqt ? "--nohash" : "--UNSAFE-ignore-hash"] : []),
           ...inputs.extra,
         ];
         await execInstallerCommand(["install-qt", ...qtArgs]);

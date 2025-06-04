@@ -42,6 +42,6 @@ Example: `https://qt.mirror.constant.com`
 Default: Use the official Qt mirror.
 
 ### `nohash`
-Set to `true` to disable hash checking when downloading Qt. Use with caution, e.g. only for testing or as a last resort if Qt's official mirror (which hosts the hashes) is down. Only works with `naqt`; `aqtinstall` requires a custom `.ini` file to change this behavior.
+Set to `true` to disable hash checking when downloading Qt. Use with caution, e.g. only for testing or as a last resort if Qt's official mirror (which hosts the hashes) is down.
 
 Default: `false`
