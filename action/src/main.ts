@@ -56,6 +56,7 @@ const pythonCommand = (command: string, args: readonly string[]): string => {
   const python = process.platform === "win32" ? "python" : "python3";
   return `${python} -m ${command} ${args.join(" ")}`;
 };
+
 const execPython = async (command: string, args: readonly string[]): Promise<number> => {
   return exec(pythonCommand(command, args));
 };
@@ -136,6 +137,10 @@ class Inputs {
   readonly py7zrVersion: string;
   readonly useNaqt: boolean;
   readonly naqtViaGit: boolean;
+
+  readonly useOfficial: boolean;
+  readonly email: string;
+  readonly pw: string;
 
   constructor() {
     const host = core.getInput("host");
@@ -262,6 +267,10 @@ class Inputs {
 
     this.py7zrVersion = core.getInput("py7zrversion");
 
+    this.useOfficial = Inputs.getBoolInput("use-official");
+    this.email = core.getInput("email");
+    this.pw = core.getInput("pw");
+
     this.src = Inputs.getBoolInput("source");
     this.srcArchives = Inputs.getStringArrayInput("src-archives");
 
@@ -290,6 +299,7 @@ class Inputs {
         this.py7zrVersion,
         this.aqtSource,
         this.aqtVersion,
+        this.useOfficial ? "official" : "",
       ],
       this.modules,
       this.extensions,
@@ -439,24 +449,38 @@ const run = async (): Promise<void> => {
 
     // Install Qt
     if (inputs.isInstallQtBinaries) {
-      const qtArgs = [
-        inputs.host,
-        inputs.target,
-        inputs.version,
-        ...(inputs.arch ? [inputs.arch] : []),
-        ...(inputs.autodesktop ? ["--autodesktop"] : []),
-        ...["--outputdir", inputs.dir],
-        ...flaggedList("--modules", [
-          ...inputs.modules,
-          ...(inputs.useNaqt ? [] : inputs.extensions),
-        ]),
-        ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
-        ...flaggedList("--archives", inputs.archives),
-        ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
-        ...(inputs.nohash ? ["--nohash"] : []),
-        ...inputs.extra,
-      ];
-      await execInstallerCommand(["install-qt", ...qtArgs]);
+      if (inputs.useOfficial && inputs.email && inputs.pw) {
+        const qtArgs = [
+          inputs.target,
+          ...(inputs.arch ? [inputs.arch] : []),
+          inputs.version,
+          ...["--outputdir", inputs.dir],
+          ...["--email", inputs.email],
+          ...["--pw", inputs.pw],
+          ...flaggedList("--modules", inputs.modules),
+          ...inputs.extra,
+        ];
+        await execInstallerCommand(["install-qt-official", ...qtArgs]);
+      } else {
+        const qtArgs = [
+          inputs.host,
+          inputs.target,
+          inputs.version,
+          ...(inputs.arch ? [inputs.arch] : []),
+          ...(inputs.autodesktop ? ["--autodesktop"] : []),
+          ...["--outputdir", inputs.dir],
+          ...flaggedList("--modules", [
+            ...inputs.modules,
+            ...(inputs.useNaqt ? [] : inputs.extensions),
+          ]),
+          ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
+          ...flaggedList("--archives", inputs.archives),
+          ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
+          ...(inputs.nohash ? ["--nohash"] : []),
+          ...inputs.extra,
+        ];
+        await execInstallerCommand(["install-qt", ...qtArgs]);
+      }
     }
 
     const installSrcDocExamples = async (

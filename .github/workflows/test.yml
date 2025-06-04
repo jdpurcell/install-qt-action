@@ -29,8 +29,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - ubuntu-24.04
           - ubuntu-22.04
-          - ubuntu-20.04
           - windows-2022
           - windows-2019
           - macos-13
@@ -66,20 +66,20 @@ jobs:
               version: "6.7.0"
               requested: "6.7.0"
               modules: qtwebengine qtpositioning qtwebchannel
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             src-doc-examples: true
             source: true
             src-archives: qtcharts
             check-dir: ../Qt/5.15.2/Src
             check: qtcharts/src/src.pro
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             src-doc-examples: true
             documentation: true
             doc-archives: qmake
             doc-modules: qtcharts qtwebengine
             check-dir: ../Qt/Docs/Qt-5.15.2
             check: qmake/qmake-tutorial.html qtcharts/qtcharts-index.html qtwebengine/qtwebengine-index.html
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             src-doc-examples: true
             examples: true
             example-archives: qtsensors
@@ -92,7 +92,7 @@ jobs:
               version: "5.15.2"
               requested: "5.15"
               modules: qtwebengine
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             qt:
               tools-only-build: true
               add-tools-to-path: false
@@ -101,6 +101,12 @@ jobs:
               version: "6.8.1"
               requested: "6.8.1"
               modules: qtwebengine qtpositioning qtwebchannel
+          - os: windows-11-arm
+            skip-test-project: true
+            qt:
+              version: "6.8.1"
+              requested: "6.8.1"
+              modules: qtpositioning qtwebchannel
 
 
     steps:
@@ -128,7 +134,7 @@ jobs:
           dir: ${{ matrix.dir }}
           modules: ${{ matrix.qt.modules }}
           version: ${{ matrix.qt.requested }}
-          tools: tools_ifw tools_qtcreator_gui,qt.tools.qtcreator_gui
+          tools: tools_qtcreator_gui,qt.tools.qtcreator_gui
           cache: ${{ matrix.cache == 'cached' }}
 
       - name: Install Qt with options and specified aqtversion
@@ -139,7 +145,7 @@ jobs:
           dir: ${{ matrix.dir }}
           modules: ${{ matrix.qt.modules }}
           version: ${{ matrix.qt.requested }}
-          tools: tools_ifw tools_qtcreator_gui,qt.tools.qtcreator_gui
+          tools: tools_qtcreator_gui,qt.tools.qtcreator_gui
           cache: ${{ matrix.cache == 'cached' }}
 
       - name: Test QT_ROOT_DIR
@@ -162,7 +168,7 @@ jobs:
           }
 
       - name: Configure test project on windows
-        if: ${{ matrix.qt.version && startsWith(matrix.os, 'windows') }}
+        if: ${{ matrix.qt.version && startsWith(matrix.os, 'windows') && !matrix.skip-test-project }}
         env:
           QT_VERSION: ${{ matrix.qt.version }}
         run: |
@@ -174,7 +180,7 @@ jobs:
         shell: cmd
 
       - name: Configure test project on unix
-        if: ${{ matrix.qt.version && !startsWith(matrix.os, 'windows') }}
+        if: ${{ matrix.qt.version && !startsWith(matrix.os, 'windows') && !matrix.skip-test-project }}
         env:
           QT_VERSION: ${{ matrix.qt.version }}
         run: |
