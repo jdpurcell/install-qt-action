@@ -434,7 +434,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
                     ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
                     ...flaggedList("--archives", inputs.archives),
                     ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
-                    ...(inputs.nohash ? ["--nohash"] : []),
+                    ...(inputs.nohash ? [inputs.useNaqt ? "--nohash" : "--UNSAFE-ignore-hash"] : []),
                     ...inputs.extra,
                 ];
                 yield execInstallerCommand(["install-qt", ...qtArgs]);
