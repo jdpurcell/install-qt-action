@@ -111,7 +111,7 @@ runs:
     if: ${{ inputs.setup-python  == 'true' }}
     uses: actions/setup-python@v5
     with:
-      python-version: '>=3.9.0 <=3.13.3'
+      python-version: '3.9.x - 3.13.x'
   - name: Install Qt
     uses: ./action
     with:
