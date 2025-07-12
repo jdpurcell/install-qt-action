@@ -9,12 +9,9 @@ Fork of [jurplel](https://github.com/jurplel)'s wonderful `install-qt-action`. G
 ```
 
 ## Additional features
-* Supports ARM64 hosts.
-* Sets the `QT_HOST_PATH` environment variable for `autodesktop` configurations.
-* Uses [aqtinstall](https://github.com/miurahr/aqtinstall) `3.3.*` by default which notably fixes WASM/Android support for Qt 6.7+, improves `autodesktop` by installing the same modules for both the host and target, and better supports Python 3.13.
-* Fixes caching issue caused by [outdated](https://github.com/actions/toolkit/discussions/1890) `actions/cache` dependency.
-* Fixes `invalid command 'bdist_wheel'` error.
+Most of the features originally implemented here (e.g. support for ARM64 hosts) have been incorporated into the official version. The only remaining differences are:
 * Option to use alternate backend [naqt](https://github.com/jdpurcell/naqt) which runs via dotnet instead of Python.
+* Some other options such as `mirror` and `nohash`.
 
 ## Options
 This fork retains all options of the original, so you can largely refer to the [official documentation](https://github.com/jurplel/install-qt-action#options). The only noteworthy additions are:
