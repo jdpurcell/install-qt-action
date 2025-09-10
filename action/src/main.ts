@@ -567,28 +567,6 @@ const run = async (): Promise<void> => {
       }
       core.addPath(path.resolve(qtPath, "bin"));
     }
-
-    // Fix for Qt 6.10+ WoA cross-compiled which includes arm64 qmake/qtpaths
-    // that aren't usable unless we're actually running on an arm64 system
-    if (
-      inputs.host === "windows" &&
-      inputs.target === "desktop" &&
-      inputs.arch.endsWith("_arm64_cross_compiled") &&
-      compareVersions(inputs.version, ">=", "6.10.0") &&
-      process.arch !== "arm64"
-    ) {
-      const binDir = path.join(qtPath, "bin");
-      for (const name of ["qmake", "qmake6", "qtpaths", "qtpaths6"]) {
-        await fs.promises.rename(
-          path.join(binDir, `${name}.exe`),
-          path.join(binDir, `target-${name}.exe`)
-        );
-        await fs.promises.copyFile(
-          path.join(binDir, `host-${name}.bat`),
-          path.join(binDir, `${name}.bat`)
-        );
-      }
-    }
   }
 };
 
