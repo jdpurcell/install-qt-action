@@ -60,21 +60,13 @@ const setOrAppendEnvVar = (name, value) => {
     }
     core.exportVariable(name, newValue);
 };
-const dirExists = (dir) => {
-    try {
-        return fs.statSync(dir).isDirectory();
-    }
-    catch (err) {
-        return false;
-    }
-};
 // Names of directories for tools (tools_conan & tools_ninja) that include binaries in the
 // base directory instead of a bin directory (ie 'Tools/Conan', not 'Tools/Conan/bin')
 const binlessToolDirectories = ["Conan", "Ninja"];
 const toolsPaths = (installDir) => {
     const binlessPaths = binlessToolDirectories
         .map((dir) => path.join(installDir, "Tools", dir))
-        .filter((dir) => dirExists(dir));
+        .filter((dir) => fs.existsSync(dir));
     return [
         "Tools/**/bin",
         "*.app/Contents/MacOS",
@@ -365,7 +357,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     if (!internalCacheHit) {
         const tempDir = os.tmpdir();
         const naqtDir = path.join(tempDir, inputs.naqtViaGit ? "naqt-src" : "naqt-bin");
-        if (inputs.useNaqt && inputs.isInstallQtBinaries && !dirExists(naqtDir)) {
+        if (inputs.useNaqt && inputs.isInstallQtBinaries && !fs.existsSync(naqtDir)) {
             const execOpt = { cwd: tempDir };
             if (inputs.naqtViaGit) {
                 const gitUrl = "https://github.com/jdpurcell/naqt.git";
@@ -513,6 +505,22 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
                 }
             }
             core.addPath(path.resolve(qtPath, "bin"));
+        }
+        // Fix for Qt 6.10+ WoA cross-compiled which includes arm64 qmake/qtpaths
+        // that aren't usable unless we're actually running on an arm64 system
+        if (inputs.host === "windows" &&
+            inputs.target === "desktop" &&
+            inputs.arch.endsWith("_arm64_cross_compiled") &&
+            compareVersions(inputs.version, ">=", "6.10.0") &&
+            process.arch !== "arm64") {
+            const binDir = path.join(qtPath, "bin");
+            for (const name of ["qmake", "qmake6", "qtpaths", "qtpaths6"]) {
+                if (!fs.existsSync(path.join(binDir, `${name}.exe`))) {
+                    continue;
+                }
+                yield fs.promises.rename(path.join(binDir, `${name}.exe`), path.join(binDir, `target-${name}.exe`));
+                yield fs.promises.copyFile(path.join(binDir, `host-${name}.bat`), path.join(binDir, `${name}.bat`));
+            }
         }
     }
 });
