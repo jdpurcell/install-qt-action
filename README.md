@@ -9,7 +9,8 @@ Fork of [jurplel](https://github.com/jurplel)'s wonderful `install-qt-action`. G
 ```
 
 ## Additional features
-Most of the features originally implemented here (e.g. support for ARM64 hosts) have been incorporated into the official version. The only remaining differences are:
+Most of the features originally implemented here (e.g. support for ARM64 hosts) have been incorporated into the official version. The current differences are:
+* Uses Node 24.
 * Option to use alternate backend [naqt](https://github.com/jdpurcell/naqt) which runs via dotnet instead of Python.
 * Some other options such as `mirror` and `nohash`.
 
