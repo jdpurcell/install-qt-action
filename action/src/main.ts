@@ -75,9 +75,9 @@ const locateQtArchDir = (installDir: string, host: string): [string, boolean] =>
     const archDir = path.basename(archPath);
     const versionDir = path.basename(path.join(archPath, ".."));
     return (
-      versionDir.match(/^6\.\d+\.\d+$/) &&
-      (archDir.match(/^(android.*|ios|wasm.*)$/) ||
-        (archDir.match(/^msvc.*_arm64$/) && host !== "windows_arm64"))
+      /^6\.\d+\.\d+$/.test(versionDir) &&
+      (/^(android.*|ios|wasm.*)$/.test(archDir) ||
+        (/^msvc.*_arm64$/.test(archDir) && host !== "windows_arm64"))
     );
   });
   if (requiresParallelDesktop.length) {
