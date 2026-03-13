@@ -8,7 +8,6 @@ import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { exec } from "@actions/exec";
 
-import * as glob from "glob";
 import { compare, CompareOperator } from "compare-versions";
 
 const compareVersions = (v1: string, op: CompareOperator, v2: string): boolean => {
@@ -39,9 +38,9 @@ const toolsPaths = (installDir: string): string[] => {
     "Tools/*/*.app/Contents/MacOS",
     "Tools/*/*.app/**/bin",
   ]
-    .flatMap((p: string): string[] => glob.sync(`${installDir}/${p}`))
+    .flatMap((p: string): string[] => fs.globSync(p, { cwd: installDir }))
     .concat(binlessPaths)
-    .map((p) => path.resolve(p));
+    .map((p) => path.resolve(installDir, p));
 };
 
 const pythonCommand = (command: string, args: readonly string[]): string => {
@@ -64,9 +63,9 @@ const flaggedList = (flag: string, listArgs: readonly string[]): string[] => {
 const locateQtArchDir = (installDir: string, host: string): [string, boolean] => {
   // For 6.4.2/gcc, qmake is at 'installDir/6.4.2/gcc_64/bin/qmake'.
   // This makes a list of all the viable arch directories that contain a qmake file.
-  const qtArchDirs = glob
-    .sync(`${installDir}/[0-9]*/*/bin/qmake*`)
-    .map((s) => path.resolve(s, "..", ".."));
+  const qtArchDirs = fs
+    .globSync("[0-9]*/*/bin/qmake*", { cwd: installDir })
+    .map((s) => path.resolve(installDir, s, "..", ".."));
 
   // For Qt6 mobile and wasm installations, and Qt6 Windows on ARM cross-compiled installations,
   // a standard desktop Qt installation must exist alongside the requested architecture.
