@@ -164,7 +164,7 @@ class Inputs {
         this.host = host;
       } else {
         throw TypeError(
-          `host: "${host}" is not one of "windows" | "windows_arm64" | "mac" | "linux" | "linux_arm64" | "all_os"`
+          `host: "${host}" is not one of "windows" | "windows_arm64" | "mac" | "linux" | "linux_arm64" | "all_os"`,
         );
       }
     }
@@ -226,7 +226,7 @@ class Inputs {
     this.tools = Inputs.getStringArrayInput("tools").map(
       // The tools inputs have the tool name, variant, and arch delimited by a comma
       // aqt expects spaces instead
-      (tool: string): string => tool.replace(/,/g, " ")
+      (tool: string): string => tool.replace(/,/g, " "),
     );
 
     this.addToolsToPath = Inputs.getBoolInput("add-tools-to-path");
@@ -477,7 +477,7 @@ const run = async (): Promise<void> => {
     const installSrcDocExamples = async (
       flavor: "src" | "doc" | "example",
       archives: readonly string[],
-      modules: readonly string[]
+      modules: readonly string[],
     ): Promise<void> => {
       const qtArgs = [
         inputs.host,
@@ -575,11 +575,11 @@ const run = async (): Promise<void> => {
         }
         await fs.promises.rename(
           path.join(binDir, `${name}.exe`),
-          path.join(binDir, `target-${name}.exe`)
+          path.join(binDir, `target-${name}.exe`),
         );
         await fs.promises.copyFile(
           path.join(binDir, `host-${name}.bat`),
-          path.join(binDir, `${name}.bat`)
+          path.join(binDir, `${name}.bat`),
         );
       }
     }
@@ -591,7 +591,6 @@ void run()
     if (err instanceof Error) {
       core.setFailed(err);
     } else {
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       core.setFailed(`unknown error: ${err}`);
     }
     process.exit(1);
