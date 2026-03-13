@@ -8,7 +8,6 @@ import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import { exec } from "@actions/exec";
 
-import * as glob from "glob";
 import { compare, CompareOperator } from "compare-versions";
 
 const compareVersions = (v1: string, op: CompareOperator, v2: string): boolean => {
@@ -39,9 +38,9 @@ const toolsPaths = (installDir: string): string[] => {
     "Tools/*/*.app/Contents/MacOS",
     "Tools/*/*.app/**/bin",
   ]
-    .flatMap((p: string): string[] => glob.sync(`${installDir}/${p}`))
+    .flatMap((p: string): string[] => fs.globSync(p, { cwd: installDir }))
     .concat(binlessPaths)
-    .map((p) => path.resolve(p));
+    .map((p) => path.resolve(installDir, p));
 };
 
 const pythonCommand = (command: string, args: readonly string[]): string => {
@@ -64,9 +63,9 @@ const flaggedList = (flag: string, listArgs: readonly string[]): string[] => {
 const locateQtArchDir = (installDir: string, host: string): [string, boolean] => {
   // For 6.4.2/gcc, qmake is at 'installDir/6.4.2/gcc_64/bin/qmake'.
   // This makes a list of all the viable arch directories that contain a qmake file.
-  const qtArchDirs = glob
-    .sync(`${installDir}/[0-9]*/*/bin/qmake*`)
-    .map((s) => path.resolve(s, "..", ".."));
+  const qtArchDirs = fs
+    .globSync("[0-9]*/*/bin/qmake*", { cwd: installDir })
+    .map((s) => path.resolve(installDir, s, "..", ".."));
 
   // For Qt6 mobile and wasm installations, and Qt6 Windows on ARM cross-compiled installations,
   // a standard desktop Qt installation must exist alongside the requested architecture.
@@ -165,7 +164,7 @@ class Inputs {
         this.host = host;
       } else {
         throw TypeError(
-          `host: "${host}" is not one of "windows" | "windows_arm64" | "mac" | "linux" | "linux_arm64" | "all_os"`
+          `host: "${host}" is not one of "windows" | "windows_arm64" | "mac" | "linux" | "linux_arm64" | "all_os"`,
         );
       }
     }
@@ -227,7 +226,7 @@ class Inputs {
     this.tools = Inputs.getStringArrayInput("tools").map(
       // The tools inputs have the tool name, variant, and arch delimited by a comma
       // aqt expects spaces instead
-      (tool: string): string => tool.replace(/,/g, " ")
+      (tool: string): string => tool.replace(/,/g, " "),
     );
 
     this.addToolsToPath = Inputs.getBoolInput("add-tools-to-path");
@@ -478,7 +477,7 @@ const run = async (): Promise<void> => {
     const installSrcDocExamples = async (
       flavor: "src" | "doc" | "example",
       archives: readonly string[],
-      modules: readonly string[]
+      modules: readonly string[],
     ): Promise<void> => {
       const qtArgs = [
         inputs.host,
@@ -576,11 +575,11 @@ const run = async (): Promise<void> => {
         }
         await fs.promises.rename(
           path.join(binDir, `${name}.exe`),
-          path.join(binDir, `target-${name}.exe`)
+          path.join(binDir, `target-${name}.exe`),
         );
         await fs.promises.copyFile(
           path.join(binDir, `host-${name}.bat`),
-          path.join(binDir, `${name}.bat`)
+          path.join(binDir, `${name}.bat`),
         );
       }
     }
@@ -592,7 +591,6 @@ void run()
     if (err instanceof Error) {
       core.setFailed(err);
     } else {
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       core.setFailed(`unknown error: ${err}`);
     }
     process.exit(1);
