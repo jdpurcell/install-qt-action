@@ -29,13 +29,13 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-24.04
           - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2022
-          - windows-2019
-          - macos-13
+          - windows-2025
           - macos-14
           - macos-15
+          - macos-26
         aqtversion:
           - null  # use whatever the default is
         src-doc-examples:
@@ -107,7 +107,6 @@ jobs:
               version: "6.8.1"
               requested: "6.8.1"
               modules: qtpositioning qtwebchannel
-
 
     steps:
       - uses: actions/checkout@v6
@@ -260,7 +259,6 @@ jobs:
             which "${tool_name}"
             "${tool_name}" --version
           done
-          
 
       - name: Test that installed tools are not in the path
         if: ${{ matrix.qt.tools-only-build && !matrix.qt.add-tools-to-path }}

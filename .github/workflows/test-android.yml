@@ -9,9 +9,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-22.04
-          - windows-2022
-          - macos-15
+          - ubuntu-24.04
+          - windows-2025
+          - macos-26
         qt:
           - version: "5.15.2"
             ndk-version: r21e
