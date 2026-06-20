@@ -29,13 +29,13 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-24.04
           - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2022
-          - windows-2019
-          - macos-13
+          - windows-2025
           - macos-14
           - macos-15
+          - macos-26
         aqtversion:
           - null  # use whatever the default is
         src-doc-examples:
@@ -98,16 +98,15 @@ jobs:
               add-tools-to-path: false
           - os: ubuntu-24.04-arm
             qt:
-              version: "6.8.1"
-              requested: "6.8.1"
+              version: "6.8.3"
+              requested: "6.8.3"
               modules: qtwebengine qtpositioning qtwebchannel
           - os: windows-11-arm
             skip-test-project: true
             qt:
-              version: "6.8.1"
-              requested: "6.8.1"
+              version: "6.8.3"
+              requested: "6.8.3"
               modules: qtpositioning qtwebchannel
-
 
     steps:
       - uses: actions/checkout@v6
@@ -156,15 +155,14 @@ jobs:
           # Check that QT_ROOT_DIR contains a qmake of some kind
           ls "${QT_ROOT_DIR}/bin/" | grep qmake
 
-      - name: Switch macOS Xcode version with older Qt versions
-        if: ${{ matrix.qt.version && startsWith(matrix.os, 'macos-13') }}
+      - name: QTBUG-145239 workaround
+        if: ${{ matrix.qt.version && startsWith(matrix.os, 'macos-26') }}
         shell: pwsh
         env:
           QT_VERSION: ${{ matrix.qt.version }}
         run: |
-          if ([version]$env:QT_VERSION -lt [version]'6.5.3') {
-            # Workaround for QTBUG-117225
-            sudo xcode-select --switch /Applications/Xcode_14.3.1.app
+          if ([version]$env:QT_VERSION -lt [version]'6.11.1') {
+            sudo xcode-select --switch /Applications/Xcode_26.3.app
           }
 
       - name: Configure test project on windows
@@ -260,7 +258,6 @@ jobs:
             which "${tool_name}"
             "${tool_name}" --version
           done
-          
 
       - name: Test that installed tools are not in the path
         if: ${{ matrix.qt.tools-only-build && !matrix.qt.add-tools-to-path }}

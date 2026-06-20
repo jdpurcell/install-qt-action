@@ -1,19 +1,11 @@
-const js = require("@eslint/js");
-const tseslint = require("typescript-eslint");
-const eslintPluginPrettierRecommended = require("eslint-plugin-prettier/recommended");
-const globals = require("globals");
+import js from "@eslint/js";
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
-module.exports = [
+export default [
   {
     ignores: ["dist/**", "lib/**"],
-  },
-  {
-    files: ["eslint.config.js"],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-      },
-    },
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked.map((config) => ({
@@ -29,7 +21,7 @@ module.exports = [
       parser: tseslint.parser,
       parserOptions: {
         project: ["./tsconfig.json"],
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
@@ -38,7 +30,7 @@ module.exports = [
       "class-methods-use-this": "error",
       "default-case": "error",
       "default-case-last": "error",
-      "eqeqeq": "error",
+      eqeqeq: "error",
       "func-names": "error",
       "func-style": "error",
       "no-confusing-arrow": "error",
@@ -66,7 +58,7 @@ module.exports = [
       "prefer-const": "error",
       "prefer-template": "error",
       "require-atomic-updates": "error",
-      "yoda": "error",
+      yoda: "error",
       "@typescript-eslint/default-param-last": "error",
       "@typescript-eslint/dot-notation": "error",
       "@typescript-eslint/explicit-function-return-type": "error",
