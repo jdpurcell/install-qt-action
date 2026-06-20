@@ -2,12 +2,13 @@
   "name": "install-qt-action",
   "version": "0.0.0",
   "private": true,
-  "description": "Install qt action for github actions",
-  "main": "lib/main.js",
+  "description": "Install Qt action for GitHub Actions",
+  "type": "module",
   "scripts": {
-    "build": "tsc -p . && ncc build lib/main.js -o dist",
-    "lint": "eslint src/main.ts",
-    "fix": "eslint src/main.ts --fix"
+    "build": "rollup --config rollup.config.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",
@@ -16,21 +17,25 @@
   "author": "jurplel",
   "license": "MIT",
   "dependencies": {
-    "@actions/cache": "^5.0.5",
-    "@actions/core": "^2.0.3",
-    "@actions/exec": "^2.0.0",
-    "compare-versions": "^3.6.0"
+    "@actions/cache": "^6.0.0",
+    "@actions/core": "^3.0.1",
+    "@actions/exec": "^3.0.0",
+    "compare-versions": "^6.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^24.0.0",
     "@types/semver": "^7.7.1",
-    "@vercel/ncc": "^0.38.4",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.4.0",
     "prettier": "^3.8.1",
+    "rollup": "^4.57.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0"
   }
