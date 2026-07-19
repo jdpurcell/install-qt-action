@@ -78880,19 +78880,18 @@ const locateQtArchDir = (installDir, host) => {
     const qtArchDirs = fs
         .globSync("[0-9]*/*/bin/qmake*", { cwd: installDir })
         .map((s) => path.resolve(installDir, s, "..", ".."));
-    // For Qt6 mobile and wasm installations, and Qt6 Windows on ARM cross-compiled installations,
-    // a standard desktop Qt installation must exist alongside the requested architecture.
-    // In these cases, we must select the first item that ends with 'android*', 'ios', 'wasm*' or 'msvc*_arm64'.
-    const requiresParallelDesktop = qtArchDirs.filter((archPath) => {
+    // For cross-compilation installs (e.g. WASM/mobile), make sure we locate its directory
+    // rather than the standard desktop Qt installation that exists alongside it.
+    const crossCompileArchDirs = qtArchDirs.filter((archPath) => {
         const archDir = path.basename(archPath);
         const versionDir = path.basename(path.join(archPath, ".."));
         return (/^6\.\d+\.\d+$/.test(versionDir) &&
-            (/^(android.*|ios|wasm.*)$/.test(archDir) ||
+            (/^(android.*|harmonyos.*|ios|wasm.*)$/.test(archDir) ||
                 (/^msvc.*_arm64$/.test(archDir) && host !== "windows_arm64")));
     });
-    if (requiresParallelDesktop.length) {
+    if (crossCompileArchDirs.length) {
         // NOTE: if multiple mobile/wasm installations coexist, this may not select the desired directory
-        return [requiresParallelDesktop[0], true];
+        return [crossCompileArchDirs[0], true];
     }
     else if (!qtArchDirs.length) {
         throw Error(`Failed to locate a Qt installation directory in  ${installDir}`);
@@ -78973,11 +78972,15 @@ class Inputs {
         }
         const target = getInput("target");
         // Make sure target is one of the allowed values
-        if (target === "desktop" || target === "android" || target === "ios" || target === "wasm") {
+        if (target === "desktop" ||
+            target === "android" ||
+            target === "harmonyos" ||
+            target === "ios" ||
+            target === "wasm") {
             this.target = target;
         }
         else {
-            throw TypeError(`target: "${target}" is not one of "desktop" | "android" | "ios" | "wasm"`);
+            throw TypeError(`target: "${target}" is not one of "desktop" | "android" | "harmonyos" | "ios" | "wasm"`);
         }
         // An attempt to sanitize non-straightforward version number input
         this.version = getInput("version");
@@ -78992,6 +78995,9 @@ class Inputs {
                 else {
                     this.arch = "android_armv7";
                 }
+            }
+            else if (this.target === "harmonyos") {
+                this.arch = "harmonyos_arm64_v8a";
             }
             else if (this.host === "windows") {
                 if (compareVersions(this.version, ">=", "6.8.0")) {
