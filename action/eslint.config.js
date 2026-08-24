@@ -71,7 +71,7 @@ export default [
       "@typescript-eslint/no-loop-func": "error",
       "@typescript-eslint/no-magic-numbers": [
         "error",
-        { ignoreArrayIndexes: true, ignore: [0, 1] },
+        { ignoreArrayIndexes: true, ignore: [-1, 0, 1] },
       ],
       "@typescript-eslint/no-redeclare": "error",
       "@typescript-eslint/no-require-imports": "error",

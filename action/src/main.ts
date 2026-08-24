@@ -14,6 +14,40 @@ const compareVersions = (v1: string, op: CompareOperator, v2: string): boolean =
   return compare(v1, v2, op);
 };
 
+const defaultNaqtSource = "https://github.com/jdpurcell/naqt/releases/download/latest/naqt.zip";
+
+type NaqtSource =
+  | { readonly kind: "archive"; readonly spec: string; readonly url: string }
+  | { readonly kind: "git"; readonly ref?: string; readonly spec: string; readonly url: string };
+
+const validateUrl = (url: string): void => {
+  new URL(url);
+};
+
+const parseNaqtSource = (input: string): NaqtSource => {
+  const spec = input || defaultNaqtSource;
+  const gitPrefix = "git+";
+  if (!spec.startsWith(gitPrefix)) {
+    validateUrl(spec);
+    return { kind: "archive", spec, url: spec };
+  }
+
+  const gitSpec = spec.slice(gitPrefix.length);
+  const schemeDelimiter = "://";
+  const schemeSeparator = gitSpec.indexOf(schemeDelimiter);
+  const authorityStart = schemeSeparator === -1 ? 0 : schemeSeparator + schemeDelimiter.length;
+  const pathStart = gitSpec.indexOf("/", authorityStart);
+  const refSeparator = pathStart === -1 ? -1 : gitSpec.indexOf("@", pathStart);
+  const hasRef = refSeparator !== -1;
+  const url = hasRef ? gitSpec.slice(0, refSeparator) : gitSpec;
+  const ref = hasRef ? gitSpec.slice(refSeparator + 1) : undefined;
+  validateUrl(url);
+  if (hasRef && (!ref || ref.startsWith("-") || /\s/.test(ref))) {
+    throw TypeError(`"naqtsource" contains an invalid Git ref`);
+  }
+  return { kind: "git", ref, spec, url };
+};
+
 const setOrAppendEnvVar = (name: string, value: string): void => {
   const oldValue = process.env[name];
   let newValue = value;
@@ -126,7 +160,7 @@ class Inputs {
   readonly aqtVersion: string;
   readonly py7zrVersion: string;
   readonly useNaqt: boolean;
-  readonly naqtViaGit: boolean;
+  readonly naqtSource: NaqtSource;
 
   readonly useOfficial: boolean;
   readonly email: string;
@@ -283,7 +317,10 @@ class Inputs {
     this.exampleArchives = Inputs.getStringArrayInput("example-archives");
 
     this.useNaqt = Inputs.getBoolInput("use-naqt");
-    this.naqtViaGit = Inputs.getBoolInput("naqt-via-git");
+    this.naqtSource = parseNaqtSource(core.getInput("naqtsource"));
+    if (this.useNaqt && this.useOfficial) {
+      throw TypeError(`"use-naqt" and "use-official" are mutually exclusive`);
+    }
   }
 
   public get cacheKey(): string {
@@ -297,7 +334,7 @@ class Inputs {
         this.version,
         this.dir,
         this.py7zrVersion,
-        this.aqtSource,
+        this.useNaqt ? this.naqtSource.spec : this.aqtSource,
         this.aqtVersion,
         this.useOfficial ? "official" : "",
       ],
@@ -405,25 +442,44 @@ const run = async (): Promise<void> => {
   // Install Qt and tools if not cached
   if (!internalCacheHit) {
     const tempDir = os.tmpdir();
-    const naqtDir = path.join(tempDir, inputs.naqtViaGit ? "naqt-src" : "naqt-bin");
+    const naqtSourceHashLength = 12;
+    const naqtSourceHash = crypto
+      .createHash("sha256")
+      .update(inputs.naqtSource.spec)
+      .digest("hex")
+      .slice(0, naqtSourceHashLength);
+    const naqtDir = path.join(tempDir, `naqt-${inputs.naqtSource.kind}-${naqtSourceHash}`);
 
     if (inputs.useNaqt && inputs.isInstallQtBinaries && !fs.existsSync(naqtDir)) {
       const execOpt = { cwd: tempDir };
-      if (inputs.naqtViaGit) {
-        const gitUrl = "https://github.com/jdpurcell/naqt.git";
-        await exec(`git clone --recurse-submodules ${gitUrl} naqt-src`, [], execOpt);
-        const env = process.env;
-        env.DOTNET_NOLOGO = "true";
-        env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
-        env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
-        env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
-        env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
+      if (inputs.naqtSource.kind === "git") {
+        await exec("git", ["init", "--quiet", naqtDir], execOpt);
+        await exec(
+          "git",
+          ["-C", naqtDir, "remote", "add", "origin", inputs.naqtSource.url],
+          execOpt,
+        );
+        await exec(
+          "git",
+          ["-C", naqtDir, "fetch", "--depth", "1", "origin", inputs.naqtSource.ref ?? "HEAD"],
+          execOpt,
+        );
+        await exec("git", ["-C", naqtDir, "checkout", "--detach", "FETCH_HEAD"], execOpt);
       } else {
-        const zipUrl = "https://github.com/jdpurcell/naqt/releases/download/latest/naqt.zip";
-        await exec(`curl -sL ${zipUrl} -o naqt.zip`, [], execOpt);
-        await exec("unzip -q naqt.zip -d naqt-bin", [], execOpt);
-        await fs.promises.unlink(path.join(tempDir, "naqt.zip"));
+        const naqtZip = path.join(tempDir, `naqt-${naqtSourceHash}.zip`);
+        await exec("curl", ["-fsSL", inputs.naqtSource.url, "-o", naqtZip], execOpt);
+        await exec("unzip", ["-q", naqtZip, "-d", naqtDir], execOpt);
+        await fs.promises.unlink(naqtZip);
       }
+    }
+
+    if (inputs.useNaqt && inputs.naqtSource.kind === "git") {
+      const env = process.env;
+      env.DOTNET_NOLOGO = "true";
+      env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
+      env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
+      env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
+      env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
     }
 
     if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
@@ -440,7 +496,7 @@ const run = async (): Promise<void> => {
 
     const execInstallerCommand = async (args: readonly string[]): Promise<number> => {
       if (inputs.useNaqt && args[0] === "install-qt") {
-        const baseArgs = inputs.naqtViaGit ? ["run", "--"] : ["naqt.dll"];
+        const baseArgs = inputs.naqtSource.kind === "git" ? ["run", "--"] : ["naqt.dll"];
         return execDotNet(naqtDir, [...baseArgs, ...args]);
       } else {
         return execPython("aqt", args);

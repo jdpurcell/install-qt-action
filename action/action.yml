@@ -64,9 +64,8 @@ inputs:
   use-naqt:
     default: false
     description: Use naqt instead of aqtinstall.
-  naqt-via-git:
-    description: Clone naqt via Git and run from source instead of using precompiled version.
-    default: false
+  naqtsource:
+    description: URL of a prebuilt naqt ZIP, or a git+ URL optionally followed by @ref.
   mirror:
     description: Custom mirror to use for downloading Qt (e.g. https://qt.mirror.constant.com). naqt only.
   nohash:
