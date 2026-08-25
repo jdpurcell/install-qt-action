@@ -78835,6 +78835,32 @@ const assertValidOperator = (op) => {
 const compareVersions = (v1, op, v2) => {
     return compare(v1, v2, op);
 };
+const defaultNaqtSource = "https://github.com/jdpurcell/naqt/releases/download/latest/naqt.zip";
+const validateUrl = (url) => {
+    new URL(url);
+};
+const parseNaqtSource = (input) => {
+    const spec = input || defaultNaqtSource;
+    const gitPrefix = "git+";
+    if (!spec.startsWith(gitPrefix)) {
+        validateUrl(spec);
+        return { kind: "archive", spec, url: spec };
+    }
+    const gitSpec = spec.slice(gitPrefix.length);
+    const schemeDelimiter = "://";
+    const schemeSeparator = gitSpec.indexOf(schemeDelimiter);
+    const authorityStart = schemeSeparator === -1 ? 0 : schemeSeparator + schemeDelimiter.length;
+    const pathStart = gitSpec.indexOf("/", authorityStart);
+    const refSeparator = pathStart === -1 ? -1 : gitSpec.indexOf("@", pathStart);
+    const hasRef = refSeparator !== -1;
+    const url = hasRef ? gitSpec.slice(0, refSeparator) : gitSpec;
+    const ref = hasRef ? gitSpec.slice(refSeparator + 1) : undefined;
+    validateUrl(url);
+    if (hasRef && (!ref || ref.startsWith("-") || /\s/.test(ref))) {
+        throw TypeError(`"naqtsource" contains an invalid Git ref`);
+    }
+    return { kind: "git", ref, spec, url };
+};
 const setOrAppendEnvVar = (name, value) => {
     const oldValue = process$1.env[name];
     let newValue = value;
@@ -78933,7 +78959,7 @@ class Inputs {
     aqtVersion;
     py7zrVersion;
     useNaqt;
-    naqtViaGit;
+    naqtSource;
     useOfficial;
     email;
     pw;
@@ -78988,8 +79014,7 @@ class Inputs {
         // Set arch automatically if omitted
         if (!this.arch) {
             if (this.target === "android") {
-                if (compareVersions(this.version, ">=", "5.14.0") &&
-                    compareVersions(this.version, "<", "6.0.0")) {
+                if (compareVersions(this.version, ">=", "5.14.0") && compareVersions(this.version, "<", "6.0.0")) {
                     this.arch = "android";
                 }
                 else {
@@ -79046,8 +79071,7 @@ class Inputs {
         }
         this.cache = Inputs.getBoolInput("cache");
         this.cacheKeyPrefix = getInput("cache-key-prefix");
-        this.isInstallQtBinaries =
-            !Inputs.getBoolInput("tools-only") && !Inputs.getBoolInput("no-qt-binaries");
+        this.isInstallQtBinaries = !Inputs.getBoolInput("tools-only") && !Inputs.getBoolInput("no-qt-binaries");
         this.setEnv = Inputs.getBoolInput("set-env");
         this.aqtSource = getInput("aqtsource");
         this.aqtVersion = getInput("aqtversion");
@@ -79064,41 +79088,42 @@ class Inputs {
         this.exampleModules = Inputs.getStringArrayInput("example-modules");
         this.exampleArchives = Inputs.getStringArrayInput("example-archives");
         this.useNaqt = Inputs.getBoolInput("use-naqt");
-        this.naqtViaGit = Inputs.getBoolInput("naqt-via-git");
+        this.naqtSource = parseNaqtSource(getInput("naqtsource"));
+        if (this.useNaqt && this.useOfficial) {
+            throw TypeError(`"use-naqt" and "use-official" are mutually exclusive`);
+        }
     }
     get cacheKey() {
         let cacheKey = this.cacheKeyPrefix;
-        for (const keyStringArray of [
-            [
-                this.host,
-                os.release(),
-                this.target,
-                this.arch,
-                this.version,
-                this.dir,
-                this.py7zrVersion,
-                this.aqtSource,
-                this.aqtVersion,
-                this.useOfficial ? "official" : "",
-            ],
-            this.modules,
-            this.extensions,
-            this.archives,
-            this.extra,
-            this.tools,
+        const keyStrings = [
+            this.host,
+            os.release(),
+            this.target,
+            this.arch,
+            this.version,
+            this.dir,
+            this.py7zrVersion,
+            this.useNaqt ? (this.naqtSource.spec === defaultNaqtSource ? "" : this.naqtSource.spec) : this.aqtSource,
+            this.aqtVersion,
+            this.useOfficial ? "official" : this.useNaqt ? "naqt" : "",
+            !this.autodesktop ? "noautodesktop" : "",
+            ...this.modules,
+            ...this.extensions,
+            ...this.archives,
+            ...this.extra,
+            ...this.tools,
             this.src ? "src" : "",
-            this.srcArchives,
+            ...this.srcArchives,
             this.doc ? "doc" : "",
-            this.docArchives,
-            this.docModules,
+            ...this.docArchives,
+            ...this.docModules,
             this.example ? "example" : "",
-            this.exampleArchives,
-            this.exampleModules,
-        ]) {
-            for (const keyString of keyStringArray) {
-                if (keyString) {
-                    cacheKey += `-${keyString}`;
-                }
+            ...this.exampleArchives,
+            ...this.exampleModules,
+        ];
+        for (const keyString of keyStrings) {
+            if (keyString) {
+                cacheKey += `-${keyString}`;
             }
         }
         // Cache keys cannot contain commas
@@ -79180,25 +79205,35 @@ const run = async () => {
     // Install Qt and tools if not cached
     if (!internalCacheHit) {
         const tempDir = os.tmpdir();
-        const naqtDir = path.join(tempDir, inputs.naqtViaGit ? "naqt-src" : "naqt-bin");
+        const naqtSourceHashLength = 10;
+        const naqtSourceId = inputs.naqtSource.spec === defaultNaqtSource
+            ? "default"
+            : crypto$1.createHash("sha256").update(inputs.naqtSource.spec).digest("hex").slice(0, naqtSourceHashLength);
+        const naqtDirName = `naqt-${inputs.naqtSource.kind}-${naqtSourceId}`;
+        const naqtDir = path.join(tempDir, naqtDirName);
         if (inputs.useNaqt && inputs.isInstallQtBinaries && !fs.existsSync(naqtDir)) {
             const execOpt = { cwd: tempDir };
-            if (inputs.naqtViaGit) {
-                const gitUrl = "https://github.com/jdpurcell/naqt.git";
-                await exec(`git clone --recurse-submodules ${gitUrl} naqt-src`, [], execOpt);
-                const env = process$1.env;
-                env.DOTNET_NOLOGO = "true";
-                env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
-                env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
-                env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
-                env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
+            if (inputs.naqtSource.kind === "git") {
+                const naqtRef = inputs.naqtSource.ref ?? "HEAD";
+                await exec("git", ["init", "--quiet", naqtDirName], execOpt);
+                await exec("git", ["-C", naqtDirName, "remote", "add", "origin", inputs.naqtSource.url], execOpt);
+                await exec("git", ["-C", naqtDirName, "fetch", "--depth", "1", "origin", naqtRef], execOpt);
+                await exec("git", ["-C", naqtDirName, "checkout", "--detach", "FETCH_HEAD"], execOpt);
             }
             else {
-                const zipUrl = "https://github.com/jdpurcell/naqt/releases/download/latest/naqt.zip";
-                await exec(`curl -sL ${zipUrl} -o naqt.zip`, [], execOpt);
-                await exec("unzip -q naqt.zip -d naqt-bin", [], execOpt);
-                await fs.promises.unlink(path.join(tempDir, "naqt.zip"));
+                const naqtZip = `naqt-${naqtSourceId}.zip`;
+                await exec("curl", ["-fsSL", inputs.naqtSource.url, "-o", naqtZip], execOpt);
+                await exec("unzip", ["-q", naqtZip, "-d", naqtDirName], execOpt);
+                await fs.promises.unlink(path.join(tempDir, naqtZip));
             }
+        }
+        if (inputs.useNaqt && inputs.naqtSource.kind === "git") {
+            const env = process$1.env;
+            env.DOTNET_NOLOGO = "true";
+            env.DOTNET_CLI_TELEMETRY_OPTOUT = "true";
+            env.DOTNET_ADD_GLOBAL_TOOLS_TO_PATH = "false";
+            env.DOTNET_GENERATE_ASPNET_CERTIFICATE = "false";
+            env.DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE = "true";
         }
         if (!inputs.useNaqt || inputs.src || inputs.doc || inputs.example || inputs.tools.length) {
             // Install dependencies via pip
@@ -79213,7 +79248,7 @@ const run = async () => {
         }
         const execInstallerCommand = async (args) => {
             if (inputs.useNaqt && args[0] === "install-qt") {
-                const baseArgs = inputs.naqtViaGit ? ["run", "--"] : ["naqt.dll"];
+                const baseArgs = inputs.naqtSource.kind === "git" ? ["run", "--"] : ["naqt.dll"];
                 return execDotNet(naqtDir, [...baseArgs, ...args]);
             }
             else {
@@ -79243,10 +79278,7 @@ const run = async () => {
                     ...(inputs.arch ? [inputs.arch] : []),
                     ...(inputs.autodesktop ? ["--autodesktop"] : []),
                     ...["--outputdir", inputs.dir],
-                    ...flaggedList("--modules", [
-                        ...inputs.modules,
-                        ...(inputs.useNaqt ? [] : inputs.extensions),
-                    ]),
+                    ...flaggedList("--modules", [...inputs.modules, ...(inputs.useNaqt ? [] : inputs.extensions)]),
                     ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
                     ...flaggedList("--archives", inputs.archives),
                     ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
