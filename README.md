@@ -17,9 +17,16 @@ Most of the features originally implemented here (e.g. support for ARM64 hosts) 
 This fork retains all options of the original, so you can largely refer to the [official documentation](https://github.com/jurplel/install-qt-action#options). The only noteworthy additions are:
 
 ### `use-naqt`
-Set to `true` to use use [naqt](https://github.com/jdpurcell/naqt) as the installer backend. This only applies to the main Qt binaries since `naqt` doesn't implement commands to support the `tools`, `source`, `documentation`, or `examples` options. Assuming you aren't using any of those, you can also set `setup-python` to `false` since `naqt` doesn't need it.
+Set to `true` to use [naqt](https://github.com/jdpurcell/naqt) as the installer backend. This only applies to the main Qt binaries since naqt doesn't implement commands to support the `tools`, `source`, `documentation`, or `examples` options. Assuming you aren't using any of those, you can also set `setup-python` to `false` since naqt doesn't need it.
 
 Default: `false`
+
+### `naqtsource`
+Location from which to obtain naqt when `use-naqt` is enabled. A URL downloads a prebuilt ZIP file. Prefix a Git URL with `git+` to clone and run naqt from source; append `@ref` to select a branch, tag, commit, or other Git ref.
+
+Example: `git+https://github.com/jdpurcell/naqt.git@main`
+
+Default: The latest prebuilt ZIP from naqt's repo.
 
 ### `autodesktop`
 Set to `true` to enable the `--autodesktop` option when installing Qt. For cross-compilation installations (e.g. WASM, Android, iOS) this will automatically install the corresponding desktop version of Qt. If you don't want the desktop version, or plan to install it separately in a different step, you can disable this.
@@ -27,7 +34,7 @@ Set to `true` to enable the `--autodesktop` option when installing Qt. For cross
 Default: `true`
 
 ### `extensions`
-Space delimited list of Qt extensions to install. With `aqtinstall` these will be appended to the list of requested modules since its command line arguments don't differentiate between modules and extensions. With `naqt` these will be passed in a separate argument. `naqt` also allows extensions to be specified as modules for compatibility with `aqtinstall`, but specifying them explicitly allows it to work with future extensions even if they aren't in `naqt`'s known extension list.
+Space delimited list of Qt extensions to install. With aqtinstall these will be appended to the list of requested modules since its command line arguments don't differentiate between modules and extensions. With naqt these will be passed in a separate argument. naqt also allows extensions to be specified as modules for compatibility with aqtinstall, but specifying them explicitly allows it to work with future extensions even if they aren't in naqt's known extension list.
 
 Example values: `qtwebengine`, `qtpdf`
 

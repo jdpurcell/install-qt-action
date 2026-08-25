@@ -67,13 +67,12 @@ inputs:
   use-naqt:
     default: false
     description: Use naqt instead of aqtinstall.
-  naqt-via-git:
-    description: Clone naqt via Git and run from source instead of using precompiled version.
-    default: false
+  naqtsource:
+    description: URL of a prebuilt naqt ZIP, or a git+ URL optionally followed by @ref.
   mirror:
-    description: Custom mirror to use for downloading Qt (e.g. https://qt.mirror.constant.com). naqt only.
+    description: Custom mirror to use for downloading Qt (e.g. https://qt.mirror.constant.com).
   nohash:
-    description: Disable hash checking when downloading Qt. naqt only.
+    description: Disable hash checking when downloading Qt.
   extra:
     description: Any extra arguments to append to the back
   source:
@@ -109,7 +108,7 @@ runs:
   steps:
   - name: Setup Python
     if: ${{ inputs.setup-python  == 'true' }}
-    uses: actions/setup-python@v6
+    uses: actions/setup-python@v7
     with:
       python-version: '3.10.x - 3.13.x'
   - name: Install Qt
@@ -136,7 +135,7 @@ runs:
       aqtversion: ${{ inputs.aqtversion }}
       py7zrversion: ${{ inputs.py7zrversion }}
       use-naqt: ${{ inputs.use-naqt }}
-      naqt-via-git: ${{ inputs.naqt-via-git }}
+      naqtsource: ${{ inputs.naqtsource }}
       mirror: ${{ inputs.mirror }}
       nohash: ${{ inputs.nohash }}
       source: ${{ inputs.source }}
