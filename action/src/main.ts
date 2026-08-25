@@ -213,9 +213,7 @@ class Inputs {
     ) {
       this.target = target;
     } else {
-      throw TypeError(
-        `target: "${target}" is not one of "desktop" | "android" | "harmonyos" | "ios" | "wasm"`,
-      );
+      throw TypeError(`target: "${target}" is not one of "desktop" | "android" | "harmonyos" | "ios" | "wasm"`);
     }
 
     // An attempt to sanitize non-straightforward version number input
@@ -225,10 +223,7 @@ class Inputs {
     // Set arch automatically if omitted
     if (!this.arch) {
       if (this.target === "android") {
-        if (
-          compareVersions(this.version, ">=", "5.14.0") &&
-          compareVersions(this.version, "<", "6.0.0")
-        ) {
+        if (compareVersions(this.version, ">=", "5.14.0") && compareVersions(this.version, "<", "6.0.0")) {
           this.arch = "android";
         } else {
           this.arch = "android_armv7";
@@ -291,8 +286,7 @@ class Inputs {
 
     this.cacheKeyPrefix = core.getInput("cache-key-prefix");
 
-    this.isInstallQtBinaries =
-      !Inputs.getBoolInput("tools-only") && !Inputs.getBoolInput("no-qt-binaries");
+    this.isInstallQtBinaries = !Inputs.getBoolInput("tools-only") && !Inputs.getBoolInput("no-qt-binaries");
 
     this.setEnv = Inputs.getBoolInput("set-env");
 
@@ -452,16 +446,8 @@ const run = async (): Promise<void> => {
       const execOpt = { cwd: tempDir };
       if (inputs.naqtSource.kind === "git") {
         await exec("git", ["init", "--quiet", naqtDir], execOpt);
-        await exec(
-          "git",
-          ["-C", naqtDir, "remote", "add", "origin", inputs.naqtSource.url],
-          execOpt,
-        );
-        await exec(
-          "git",
-          ["-C", naqtDir, "fetch", "--depth", "1", "origin", inputs.naqtSource.ref ?? "HEAD"],
-          execOpt,
-        );
+        await exec("git", ["-C", naqtDir, "remote", "add", "origin", inputs.naqtSource.url], execOpt);
+        await exec("git", ["-C", naqtDir, "fetch", "--depth", "1", "origin", inputs.naqtSource.ref ?? "HEAD"], execOpt);
         await exec("git", ["-C", naqtDir, "checkout", "--detach", "FETCH_HEAD"], execOpt);
       } else {
         const naqtZip = path.join(tempDir, `naqt-${naqtSourceHash}.zip`);
@@ -523,10 +509,7 @@ const run = async (): Promise<void> => {
           ...(inputs.arch ? [inputs.arch] : []),
           ...(inputs.autodesktop ? ["--autodesktop"] : []),
           ...["--outputdir", inputs.dir],
-          ...flaggedList("--modules", [
-            ...inputs.modules,
-            ...(inputs.useNaqt ? [] : inputs.extensions),
-          ]),
+          ...flaggedList("--modules", [...inputs.modules, ...(inputs.useNaqt ? [] : inputs.extensions)]),
           ...flaggedList("--extensions", [...(inputs.useNaqt ? inputs.extensions : [])]),
           ...flaggedList("--archives", inputs.archives),
           ...(inputs.mirror ? [inputs.useNaqt ? "--mirror" : "--base", inputs.mirror] : []),
@@ -636,14 +619,8 @@ const run = async (): Promise<void> => {
         if (!fs.existsSync(path.join(binDir, `${name}.exe`))) {
           continue;
         }
-        await fs.promises.rename(
-          path.join(binDir, `${name}.exe`),
-          path.join(binDir, `target-${name}.exe`),
-        );
-        await fs.promises.copyFile(
-          path.join(binDir, `host-${name}.bat`),
-          path.join(binDir, `${name}.bat`),
-        );
+        await fs.promises.rename(path.join(binDir, `${name}.exe`), path.join(binDir, `target-${name}.exe`));
+        await fs.promises.copyFile(path.join(binDir, `host-${name}.bat`), path.join(binDir, `${name}.bat`));
       }
     }
   }
