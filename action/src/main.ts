@@ -325,37 +325,35 @@ class Inputs {
 
   public get cacheKey(): string {
     let cacheKey = this.cacheKeyPrefix;
-    for (const keyStringArray of [
-      [
-        this.host,
-        os.release(),
-        this.target,
-        this.arch,
-        this.version,
-        this.dir,
-        this.py7zrVersion,
-        this.useNaqt ? this.naqtSource.spec : this.aqtSource,
-        this.aqtVersion,
-        this.useOfficial ? "official" : "",
-      ],
-      this.modules,
-      this.extensions,
-      this.archives,
-      this.extra,
-      this.tools,
+    const keyStrings: readonly string[] = [
+      this.host,
+      os.release(),
+      this.target,
+      this.arch,
+      this.version,
+      this.dir,
+      this.py7zrVersion,
+      this.useNaqt ? (this.naqtSource.spec === defaultNaqtSource ? "" : this.naqtSource.spec) : this.aqtSource,
+      this.aqtVersion,
+      this.useOfficial ? "official" : this.useNaqt ? "naqt" : "",
+      !this.autodesktop ? "noautodesktop" : "",
+      ...this.modules,
+      ...this.extensions,
+      ...this.archives,
+      ...this.extra,
+      ...this.tools,
       this.src ? "src" : "",
-      this.srcArchives,
+      ...this.srcArchives,
       this.doc ? "doc" : "",
-      this.docArchives,
-      this.docModules,
+      ...this.docArchives,
+      ...this.docModules,
       this.example ? "example" : "",
-      this.exampleArchives,
-      this.exampleModules,
-    ]) {
-      for (const keyString of keyStringArray) {
-        if (keyString) {
-          cacheKey += `-${keyString}`;
-        }
+      ...this.exampleArchives,
+      ...this.exampleModules,
+    ];
+    for (const keyString of keyStrings) {
+      if (keyString) {
+        cacheKey += `-${keyString}`;
       }
     }
     // Cache keys cannot contain commas

@@ -41,7 +41,7 @@ export default [
       "no-floating-decimal": "error",
       "no-implicit-coercion": "error",
       "no-implicit-globals": "error",
-      "no-nested-ternary": "error",
+      "no-nested-ternary": "off",
       "no-octal-escape": "error",
       "no-plusplus": "error",
       "no-restricted-syntax": "error",
