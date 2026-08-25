@@ -70,9 +70,9 @@ inputs:
   naqtsource:
     description: URL of a prebuilt naqt ZIP, or a git+ URL optionally followed by @ref.
   mirror:
-    description: Custom mirror to use for downloading Qt (e.g. https://qt.mirror.constant.com). naqt only.
+    description: Custom mirror to use for downloading Qt (e.g. https://qt.mirror.constant.com).
   nohash:
-    description: Disable hash checking when downloading Qt. naqt only.
+    description: Disable hash checking when downloading Qt.
   extra:
     description: Any extra arguments to append to the back
   source:
