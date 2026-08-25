@@ -434,26 +434,27 @@ const run = async (): Promise<void> => {
   // Install Qt and tools if not cached
   if (!internalCacheHit) {
     const tempDir = os.tmpdir();
-    const naqtSourceHashLength = 12;
-    const naqtSourceHash = crypto
-      .createHash("sha256")
-      .update(inputs.naqtSource.spec)
-      .digest("hex")
-      .slice(0, naqtSourceHashLength);
-    const naqtDir = path.join(tempDir, `naqt-${inputs.naqtSource.kind}-${naqtSourceHash}`);
+    const naqtSourceHashLength = 10;
+    const naqtSourceId =
+      inputs.naqtSource.spec === defaultNaqtSource
+        ? "default"
+        : crypto.createHash("sha256").update(inputs.naqtSource.spec).digest("hex").slice(0, naqtSourceHashLength);
+    const naqtDirName = `naqt-${inputs.naqtSource.kind}-${naqtSourceId}`;
+    const naqtDir = path.join(tempDir, naqtDirName);
 
     if (inputs.useNaqt && inputs.isInstallQtBinaries && !fs.existsSync(naqtDir)) {
       const execOpt = { cwd: tempDir };
       if (inputs.naqtSource.kind === "git") {
-        await exec("git", ["init", "--quiet", naqtDir], execOpt);
-        await exec("git", ["-C", naqtDir, "remote", "add", "origin", inputs.naqtSource.url], execOpt);
-        await exec("git", ["-C", naqtDir, "fetch", "--depth", "1", "origin", inputs.naqtSource.ref ?? "HEAD"], execOpt);
-        await exec("git", ["-C", naqtDir, "checkout", "--detach", "FETCH_HEAD"], execOpt);
+        const naqtRef = inputs.naqtSource.ref ?? "HEAD";
+        await exec("git", ["init", "--quiet", naqtDirName], execOpt);
+        await exec("git", ["-C", naqtDirName, "remote", "add", "origin", inputs.naqtSource.url], execOpt);
+        await exec("git", ["-C", naqtDirName, "fetch", "--depth", "1", "origin", naqtRef], execOpt);
+        await exec("git", ["-C", naqtDirName, "checkout", "--detach", "FETCH_HEAD"], execOpt);
       } else {
-        const naqtZip = path.join(tempDir, `naqt-${naqtSourceHash}.zip`);
+        const naqtZip = `naqt-${naqtSourceId}.zip`;
         await exec("curl", ["-fsSL", inputs.naqtSource.url, "-o", naqtZip], execOpt);
-        await exec("unzip", ["-q", naqtZip, "-d", naqtDir], execOpt);
-        await fs.promises.unlink(naqtZip);
+        await exec("unzip", ["-q", naqtZip, "-d", naqtDirName], execOpt);
+        await fs.promises.unlink(path.join(tempDir, naqtZip));
       }
     }
 
