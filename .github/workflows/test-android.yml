@@ -42,6 +42,12 @@ jobs:
           cd action
           npm run build
 
+      - name: Use local internal action
+        run: |
+          sed -i.bak 's|uses: \$/action|uses: ./action|' action.yml
+          rm action.yml.bak
+        shell: bash
+
       - name: Install Qt
         uses: ./
         with:
