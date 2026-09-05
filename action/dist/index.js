@@ -78912,7 +78912,7 @@ const locateQtArchDir = (installDir, host) => {
         const archDir = path.basename(archPath);
         const versionDir = path.basename(path.join(archPath, ".."));
         return (/^6\.\d+\.\d+$/.test(versionDir) &&
-            (/^(android.*|harmonyos.*|ios|wasm.*)$/.test(archDir) ||
+            (/^(android.*|harmonyos.*|ios.*|wasm.*)$/.test(archDir) ||
                 (/^msvc.*_arm64$/.test(archDir) && host !== "windows_arm64")));
     });
     if (crossCompileArchDirs.length) {
